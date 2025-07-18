@@ -39,8 +39,6 @@ public final class LookInMyEyes {
             LivingEntity observer = event.getEntity();
             Level level = observer.level();
             if (level.isClientSide() || target == null) return;
-            LivingEntity lastHurt = target.getLastHurtByMob();
-            if (lastHurt != null && lastHurt.getUUID().equals(observer.getUUID())) return;
             if (!isInFieldOfView(observer, target)) event.setCanceled(true);
         });
     }
