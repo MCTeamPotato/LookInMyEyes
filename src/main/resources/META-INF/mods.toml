@@ -1,0 +1,13 @@
+modLoader = "javafml"
+loaderVersion = "[36,)"
+#issueTrackerURL = ""
+license = "MIT"
+
+[[mods]]
+modId = "lookinmyeyes"
+version = "${version}"
+displayName = "LookInMyEyes"
+authors = "Kall"
+description = '''
+'''
+#logoFile = ""

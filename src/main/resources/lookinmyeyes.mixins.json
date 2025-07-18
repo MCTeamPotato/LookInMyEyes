@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "me.kall.lookinmyeyes.common.mixin",
+  "plugin": "me.kall.lookinmyeyes.common.mixin.MixinConfigPlugin",
+  "compatibilityLevel": "JAVA_8",
+  "overwrites": {
+    "conformVisibility": false
+  },
+  "minVersion": "0.8",
+  "client": [
+  ],
+  "mixins": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
