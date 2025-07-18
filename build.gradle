@@ -50,12 +50,10 @@ dependencies {
         parchment("org.parchmentmc.data:parchment-${project.minecraft_version}:${project.parchment_version}@zip")
     }
     forge "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
-    shadow(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixinextras_version}"))
 }
 
 shadowJar {
     configurations = [project.configurations.shadow]
-    relocate "com.llamalad7.mixinextras", "me.kall.lookinmyeyes.mixinextras"
     mergeServiceFiles()
 
     archiveClassifier = "dev-shadow"
