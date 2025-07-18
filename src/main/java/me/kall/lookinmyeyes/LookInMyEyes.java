@@ -1,9 +1,11 @@
 package me.kall.lookinmyeyes;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
@@ -20,21 +22,20 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Supplier;
 
 @Mod(LookInMyEyes.MOD_ID)
 public final class LookInMyEyes {
     public static final String MOD_ID = "lookinmyeyes";
     private static final Logger LOGGER = LogManager.getLogger(LookInMyEyes.class);
-
-    private static final String PROTOCOL_VERSION = "1";
-    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(ResourceLocation.parse(MOD_ID + ":main"), () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
-    private static int packetId = 0;
 
     private static final ModConfigSpec CONFIG;
     private static final ModConfigSpec.DoubleValue VIEW_FIELD;
@@ -52,13 +53,12 @@ public final class LookInMyEyes {
         CONFIG = builder.build();
     }
 
-    public LookInMyEyes(IEventBus modEventBus, Dist dist, @NotNull ModContainer container) {
+    public LookInMyEyes(@NotNull IEventBus modEventBus, Dist dist, @NotNull ModContainer container) {
         LOGGER.info("Look in my eyes!");
         container.registerConfig(ModConfig.Type.COMMON, CONFIG);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onTargetChange);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onSoundPlay);
-
-        CHANNEL.registerMessage(packetId++, SoundAlertPacket.class, SoundAlertPacket::encode, SoundAlertPacket::new, this::handleSoundAlert);
+        modEventBus.addListener(this::registerPacket);
     }
 
     public void onTargetChange(@NotNull LivingChangeTargetEvent event) {
@@ -82,9 +82,14 @@ public final class LookInMyEyes {
             }
 
             if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
-                CHANNEL.sendToServer(new SoundAlertPacket(player.getId(), event.getNewVolume()));
+                PacketDistributor.sendToServer(new SoundAlertC2SMessage(player.getId(), event.getNewVolume()));
             }
         }
+    }
+
+    public void registerPacket(@NotNull RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar("1.0.0");
+        registrar.playToServer(SoundAlertC2SMessage.TYPE, SoundAlertC2SMessage.STREAM_CODEC, SoundAlertC2SMessage::handleServer);
     }
 
     public static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
@@ -94,56 +99,45 @@ public final class LookInMyEyes {
         return Math.toDegrees(Math.acos(observer.getViewVector(1.0F).dot(new Vec3(x, y, z).normalize()))) < VIEW_FIELD.get() / 2.0D;
     }
 
-    private void handleSoundAlert(SoundAlertPacket packet, @NotNull Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            ServerPlayer player = ctx.get().getSender();
-            if (player == null) return;
+    private record SoundAlertC2SMessage(int playerId, float volume) implements CustomPacketPayload {
+        public static final Type<SoundAlertC2SMessage> TYPE = new Type<>(ResourceLocation.parse(MOD_ID + ":sound_alert"));
 
-            ServerLevel level = (ServerLevel) player.level();
-            float radius = packet.volume * 16.0F;
-            AABB soundRadius = player.getBoundingBox().inflate(radius);
+        public static final StreamCodec<RegistryFriendlyByteBuf, SoundAlertC2SMessage> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.INT, SoundAlertC2SMessage::playerId, ByteBufCodecs.FLOAT, SoundAlertC2SMessage::volume, SoundAlertC2SMessage::new);
 
-            level.getEntitiesOfClass(PathfinderMob.class, soundRadius, LivingEntity::isAlive).forEach(entity -> {
-                Vec3 toSound = player.position().subtract(entity.position()).normalize();
-
-                double yaw = Math.toDegrees(Math.atan2(toSound.z, toSound.x)) - 90;
-
-                double pitch = -Math.toDegrees(Math.atan2(toSound.y, Math.sqrt(toSound.x * toSound.x + toSound.z * toSound.z)));
-
-                entity.setYRot((float) yaw);
-                entity.setXRot((float) pitch);
-
-                entity.yRotO = (float) yaw;
-                entity.xRotO = (float) pitch;
-
-                entity.setYHeadRot((float) yaw);
-
-                if (player.isCreative()) return;
-
-                entity.getPersistentData().putBoolean(MOD_ID, true);
-                entity.setTarget(player);
-            });
-        });
-        ctx.get().setPacketHandled(true);
-    }
-
-    private static class SoundAlertPacket {
-        private final int playerId;
-        private final float volume;
-
-        SoundAlertPacket(int playerId, float volume) {
-            this.playerId = playerId;
-            this.volume = volume;
+        @Override
+        public @NotNull Type<? extends CustomPacketPayload> type() {
+            return TYPE;
         }
 
-        SoundAlertPacket(@NotNull FriendlyByteBuf buf) {
-            this.playerId = buf.readInt();
-            this.volume = buf.readFloat();
-        }
+        public static void handleServer(final SoundAlertC2SMessage msg, final IPayloadContext ctx) {
+            ctx.enqueueWork(() -> {
+                Player player = ctx.player();
 
-        void encode(@NotNull FriendlyByteBuf buf) {
-            buf.writeInt(playerId);
-            buf.writeFloat(volume);
+                ServerLevel level = (ServerLevel) player.level();
+                float radius = msg.volume * 16.0F;
+                AABB soundRadius = player.getBoundingBox().inflate(radius);
+
+                level.getEntitiesOfClass(PathfinderMob.class, soundRadius, LivingEntity::isAlive).forEach(entity -> {
+                    Vec3 toSound = player.position().subtract(entity.position()).normalize();
+
+                    double yaw = Math.toDegrees(Math.atan2(toSound.z, toSound.x)) - 90;
+
+                    double pitch = -Math.toDegrees(Math.atan2(toSound.y, Math.sqrt(toSound.x * toSound.x + toSound.z * toSound.z)));
+
+                    entity.setYRot((float) yaw);
+                    entity.setXRot((float) pitch);
+
+                    entity.yRotO = (float) yaw;
+                    entity.xRotO = (float) pitch;
+
+                    entity.setYHeadRot((float) yaw);
+
+                    if (player.isCreative()) return;
+
+                    entity.getPersistentData().putBoolean(MOD_ID, true);
+                    entity.setTarget(player);
+                });
+            }).exceptionally(throwable -> null);
         }
     }
 }
