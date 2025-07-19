@@ -82,12 +82,12 @@ public final class LookInMyEyes {
             }
 
             if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
-                CHANNEL.sendToServer(new SoundAlertPacket(player.getId(), event.getNewVolume()));
+                CHANNEL.sendToServer(new SoundAlertPacket(event.getNewVolume()));
             }
         }
     }
 
-    public static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
+    private static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
         double x = target.getX() - observer.getX();
         double y = target.getEyeY() - observer.getEyeY();
         double z = target.getZ() - observer.getZ();
@@ -128,21 +128,17 @@ public final class LookInMyEyes {
     }
 
     private static class SoundAlertPacket {
-        private final int playerId;
         private final float volume;
 
-        SoundAlertPacket(int playerId, float volume) {
-            this.playerId = playerId;
+        SoundAlertPacket(float volume) {
             this.volume = volume;
         }
 
         SoundAlertPacket(@NotNull FriendlyByteBuf buf) {
-            this.playerId = buf.readInt();
             this.volume = buf.readFloat();
         }
 
         void encode(@NotNull FriendlyByteBuf buf) {
-            buf.writeInt(playerId);
             buf.writeFloat(volume);
         }
     }
