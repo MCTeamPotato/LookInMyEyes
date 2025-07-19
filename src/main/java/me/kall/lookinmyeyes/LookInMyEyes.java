@@ -13,14 +13,13 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.PlaySoundAtEntityEvent;
-import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraftforge.fml.network.NetworkRegistry;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,7 @@ public final class LookInMyEyes {
     private static final Logger LOGGER = LogManager.getLogger(LookInMyEyes.class);
 
     private static final String PROTOCOL_VERSION = "1";
-    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(ResourceLocation.parse(MOD_ID + ":main"), () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
+    private static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(new ResourceLocation(MOD_ID + ":main"), () -> PROTOCOL_VERSION, PROTOCOL_VERSION::equals, PROTOCOL_VERSION::equals);
     private static int packetId = 0;
 
     private static final ForgeConfigSpec CONFIG;
@@ -56,27 +55,15 @@ public final class LookInMyEyes {
     public LookInMyEyes() {
         LOGGER.info("Look in my eyes!");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CONFIG);
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onTargetChange);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onSoundPlay);
 
         CHANNEL.registerMessage(packetId++, SoundAlertPacket.class, SoundAlertPacket::encode, SoundAlertPacket::new, this::handleSoundAlert);
     }
 
-    public void onTargetChange(@NotNull LivingChangeTargetEvent event) {
-        if (event.isCanceled()) return;
-        LivingEntity target = event.getNewTarget();
-        LivingEntity observer = event.getEntityLiving();
-        if (observer.level.isClientSide() || target == null) return;
-        if (observer.getPersistentData().getBoolean(MOD_ID)) {
-            observer.getPersistentData().remove(MOD_ID);
-            return;
-        }
-        if (!isInFieldOfView(observer, target)) event.setCanceled(true);
-    }
-
     public void onSoundPlay(@NotNull PlaySoundAtEntityEvent event) {
         if (event.isCanceled() || !MOBS_CHECK_SOUND_SOURCE.get() || !event.getCategory().equals(SoundSource.PLAYERS)) return;
-        if (event.getEntity() instanceof Player player) {
+        if (event.getEntity() instanceof Player) {
+            Player player = (Player) event.getEntity();
             if (player.isSteppingCarefully() && SNEAKING_NO_SOUND.get()) {
                 event.setCanceled(true);
                 return;
@@ -88,7 +75,7 @@ public final class LookInMyEyes {
         }
     }
 
-    private static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
+    public static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
         double x = target.getX() - observer.getX();
         double y = target.getEyeY() - observer.getEyeY();
         double z = target.getZ() - observer.getZ();
@@ -111,8 +98,8 @@ public final class LookInMyEyes {
 
                 double pitch = -Math.toDegrees(Math.atan2(toSound.y, Math.sqrt(toSound.x * toSound.x + toSound.z * toSound.z)));
 
-                entity.setYRot((float) yaw);
-                entity.setXRot((float) pitch);
+                entity.yRot = (float) yaw;
+                entity.xRot = (float) pitch;
 
                 entity.yRotO = (float) yaw;
                 entity.xRotO = (float) pitch;

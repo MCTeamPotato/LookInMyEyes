@@ -17,6 +17,10 @@ base {
 
 loom {
     silentMojangMappingsLicense()
+
+    forge {
+        mixinConfig 'lookinmyeyes.mixins.json'
+    }
 }
 
 repositories {

@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "me.kall.lookinmyeyes.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "overwrites": {
+    "conformVisibility": false
+  },
+  "minVersion": "0.8",
+  "client": [
+  ],
+  "mixins": [
+    "MobMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
