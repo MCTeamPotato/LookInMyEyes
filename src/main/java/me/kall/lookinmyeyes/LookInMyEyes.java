@@ -1,4 +1,5 @@
 package me.kall.lookinmyeyes;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -11,12 +12,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.PlayLevelSoundEvent;
+import net.minecraftforge.event.entity.PlaySoundAtEntityEvent;
 import net.minecraftforge.event.entity.living.LivingChangeTargetEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -52,9 +53,9 @@ public final class LookInMyEyes {
         CONFIG = builder.build();
     }
 
-    public LookInMyEyes(@NotNull FMLJavaModLoadingContext context) {
+    public LookInMyEyes() {
         LOGGER.info("Look in my eyes!");
-        context.registerConfig(ModConfig.Type.COMMON, CONFIG);
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CONFIG);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onTargetChange);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onSoundPlay);
 
@@ -64,7 +65,7 @@ public final class LookInMyEyes {
     public void onTargetChange(@NotNull LivingChangeTargetEvent event) {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
-        LivingEntity observer = event.getEntity();
+        LivingEntity observer = event.getEntityLiving();
         if (observer.level.isClientSide() || target == null) return;
         if (observer.getPersistentData().getBoolean(MOD_ID)) {
             observer.getPersistentData().remove(MOD_ID);
@@ -73,8 +74,8 @@ public final class LookInMyEyes {
         if (!isInFieldOfView(observer, target)) event.setCanceled(true);
     }
 
-    public void onSoundPlay(@NotNull PlayLevelSoundEvent.AtEntity event) {
-        if (event.isCanceled() || !MOBS_CHECK_SOUND_SOURCE.get() || !event.getSource().equals(SoundSource.PLAYERS)) return;
+    public void onSoundPlay(@NotNull PlaySoundAtEntityEvent event) {
+        if (event.isCanceled() || !MOBS_CHECK_SOUND_SOURCE.get() || !event.getCategory().equals(SoundSource.PLAYERS)) return;
         if (event.getEntity() instanceof Player player) {
             if (player.isSteppingCarefully() && SNEAKING_NO_SOUND.get()) {
                 event.setCanceled(true);
@@ -82,7 +83,7 @@ public final class LookInMyEyes {
             }
 
             if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
-                CHANNEL.sendToServer(new SoundAlertPacket(event.getNewVolume()));
+                CHANNEL.sendToServer(new SoundAlertPacket(event.getVolume()));
             }
         }
     }
