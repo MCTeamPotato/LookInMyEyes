@@ -65,7 +65,7 @@ public final class LookInMyEyes {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
         LivingEntity observer = event.getEntity();
-        if (observer.level().isClientSide() || target == null) return;
+        if (observer.level.isClientSide() || target == null) return;
         if (observer.getPersistentData().getBoolean(MOD_ID)) {
             observer.getPersistentData().remove(MOD_ID);
             return;
@@ -99,7 +99,7 @@ public final class LookInMyEyes {
             ServerPlayer player = ctx.get().getSender();
             if (player == null) return;
 
-            ServerLevel level = (ServerLevel) player.level();
+            ServerLevel level = (ServerLevel) player.level;
             float radius = packet.volume * 16.0F;
             AABB soundRadius = player.getBoundingBox().inflate(radius);
 
