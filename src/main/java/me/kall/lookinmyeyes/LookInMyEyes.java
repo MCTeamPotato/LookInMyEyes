@@ -82,7 +82,7 @@ public final class LookInMyEyes {
             }
 
             if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
-                PacketDistributor.sendToServer(new SoundAlertC2SMessage(player.getId(), event.getNewVolume()));
+                PacketDistributor.sendToServer(new SoundAlertC2SMessage(event.getNewVolume()));
             }
         }
     }
@@ -92,17 +92,17 @@ public final class LookInMyEyes {
         registrar.playToServer(SoundAlertC2SMessage.TYPE, SoundAlertC2SMessage.STREAM_CODEC, SoundAlertC2SMessage::handleServer);
     }
 
-    public static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
+    private static boolean isInFieldOfView(@NotNull LivingEntity observer, @NotNull LivingEntity target) {
         double x = target.getX() - observer.getX();
         double y = target.getEyeY() - observer.getEyeY();
         double z = target.getZ() - observer.getZ();
         return Math.toDegrees(Math.acos(observer.getViewVector(1.0F).dot(new Vec3(x, y, z).normalize()))) < VIEW_FIELD.get() / 2.0D;
     }
 
-    private record SoundAlertC2SMessage(int playerId, float volume) implements CustomPacketPayload {
+    private record SoundAlertC2SMessage(float volume) implements CustomPacketPayload {
         public static final Type<SoundAlertC2SMessage> TYPE = new Type<>(ResourceLocation.parse(MOD_ID + ":sound_alert"));
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, SoundAlertC2SMessage> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.INT, SoundAlertC2SMessage::playerId, ByteBufCodecs.FLOAT, SoundAlertC2SMessage::volume, SoundAlertC2SMessage::new);
+        public static final StreamCodec<RegistryFriendlyByteBuf, SoundAlertC2SMessage> STREAM_CODEC = StreamCodec.composite(ByteBufCodecs.FLOAT, SoundAlertC2SMessage::volume, SoundAlertC2SMessage::new);
 
         @Override
         public @NotNull Type<? extends CustomPacketPayload> type() {
