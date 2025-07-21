@@ -1,6 +1,7 @@
 package me.kall.lookinmyeyes;
 
 import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -24,9 +25,6 @@ import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.network.NetworkEvent;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
-import net.minecraftforge.network.NetworkEvent;
-import net.minecraftforge.network.NetworkRegistry;
-import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,8 +61,8 @@ public final class LookInMyEyes {
         MOBS_CHECK_SOUND_SOURCE = builder.comment("If enabled, PathfinderMobs would turn to the sound source when they heard sth.").define("MobsCheckSoundSource", true);
         MOBS_CHECK_SOUND_SOURCE_CHANCE = builder.comment("The possibility of mobs checking sound source when they heard sth.").defineInRange("MobsCheckSoundSourceChance(%)", 30, 0, 100);
         SNEAKING_NO_SOUND = builder.comment("If enabled, you will not play any sound when sneaking").define("SneakNoSound", true);
-        DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", List.of(), Predicates.alwaysTrue());
-        BLIND = builder.comment("Blind entities that fail to see anything").define("Blind", List.of(), Predicates.alwaysTrue());
+        DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", Lists.newArrayList(), Predicates.alwaysTrue());
+        BLIND = builder.comment("Blind entities that fail to see anything").define("Blind", Lists.newArrayList(), Predicates.alwaysTrue());
         builder.pop();
         CONFIG = builder.build();
     }
@@ -135,12 +133,12 @@ public final class LookInMyEyes {
     }
 
     private static Set<EntityType<?>> getDeafEntities() {
-        if (deafEntities == null) deafEntities = DEAF.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITIES::getValue).collect(Collectors.toSet());
+        if (deafEntities == null) deafEntities = DEAF.get().stream().map(ResourceLocation::new).map(ForgeRegistries.ENTITIES::getValue).collect(Collectors.toSet());
         return deafEntities;
     }
 
-    private static Set<EntityType<?>> getBlindEntities() {
-        if (blindEntities == null) blindEntities = BLIND.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITIES::getValue).collect(Collectors.toSet());
+    public static Set<EntityType<?>> getBlindEntities() {
+        if (blindEntities == null) blindEntities = BLIND.get().stream().map(ResourceLocation::new).map(ForgeRegistries.ENTITIES::getValue).collect(Collectors.toSet());
         return blindEntities;
     }
 

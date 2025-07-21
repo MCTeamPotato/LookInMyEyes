@@ -18,6 +18,10 @@ public abstract class MobMixin {
             observer.getPersistentData().remove(LookInMyEyes.MOD_ID);
             return;
         }
-        if (!LookInMyEyes.isInFieldOfView(observer, target)) ci.cancel();
+        if (LookInMyEyes.isInFieldOfView(observer, target)) {
+            if (LookInMyEyes.getBlindEntities().contains(observer.getType())) ci.cancel();
+        } else {
+            ci.cancel();
+        }
     }
 }
