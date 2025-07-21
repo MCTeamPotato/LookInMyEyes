@@ -1,11 +1,16 @@
 package me.kall.lookinmyeyes;
+
+import com.google.common.base.Predicates;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -20,12 +25,17 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Mod(LookInMyEyes.MOD_ID)
 public final class LookInMyEyes {
@@ -40,6 +50,9 @@ public final class LookInMyEyes {
     private static final ForgeConfigSpec.DoubleValue VIEW_FIELD;
     private static final ForgeConfigSpec.IntValue MOBS_CHECK_SOUND_SOURCE_CHANCE;
     private static final ForgeConfigSpec.BooleanValue MOBS_CHECK_SOUND_SOURCE, SNEAKING_NO_SOUND;
+    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DEAF, BLIND;
+
+    private static Set<EntityType<?>> deafEntities, blindEntities;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -48,6 +61,8 @@ public final class LookInMyEyes {
         MOBS_CHECK_SOUND_SOURCE = builder.comment("If enabled, PathfinderMobs would turn to the sound source when they heard sth.").define("MobsCheckSoundSource", true);
         MOBS_CHECK_SOUND_SOURCE_CHANCE = builder.comment("The possibility of mobs checking sound source when they heard sth.").defineInRange("MobsCheckSoundSourceChance(%)", 30, 0, 100);
         SNEAKING_NO_SOUND = builder.comment("If enabled, you will not play any sound when sneaking").define("SneakNoSound", true);
+        DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", List.of(), Predicates.alwaysTrue());
+        BLIND = builder.comment("Blind entities that fail to see anything").define("Blind", List.of(), Predicates.alwaysTrue());
         builder.pop();
         CONFIG = builder.build();
     }
@@ -70,7 +85,11 @@ public final class LookInMyEyes {
             observer.getPersistentData().remove(MOD_ID);
             return;
         }
-        if (!isInFieldOfView(observer, target)) event.setCanceled(true);
+        if (isInFieldOfView(observer, target)) {
+            if (getBlindEntities().contains(observer.getType())) event.setCanceled(true);
+        } else {
+            event.setCanceled(true);
+        }
     }
 
     public void onSoundPlay(@NotNull PlayLevelSoundEvent.AtEntity event) {
@@ -102,8 +121,9 @@ public final class LookInMyEyes {
             ServerLevel level = (ServerLevel) player.level();
             float radius = packet.volume * 16.0F;
             AABB soundRadius = player.getBoundingBox().inflate(radius);
+            Predicate<Mob> filter = entity -> entity.isAlive() && entity instanceof Enemy && entity.getTarget() == null && !getDeafEntities().contains(entity.getType());
 
-            level.getEntitiesOfClass(PathfinderMob.class, soundRadius, LivingEntity::isAlive).forEach(entity -> {
+            level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
                 Vec3 toSound = player.position().subtract(entity.position()).normalize();
 
                 double yaw = Math.toDegrees(Math.atan2(toSound.z, toSound.x)) - 90;
@@ -125,6 +145,16 @@ public final class LookInMyEyes {
             });
         });
         ctx.get().setPacketHandled(true);
+    }
+
+    private static Set<EntityType<?>> getDeafEntities() {
+        if (deafEntities == null) deafEntities = DEAF.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITY_TYPES::getValue).collect(Collectors.toSet());
+        return deafEntities;
+    }
+
+    private static Set<EntityType<?>> getBlindEntities() {
+        if (blindEntities == null) blindEntities = BLIND.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITY_TYPES::getValue).collect(Collectors.toSet());
+        return blindEntities;
     }
 
     private static class SoundAlertPacket {
