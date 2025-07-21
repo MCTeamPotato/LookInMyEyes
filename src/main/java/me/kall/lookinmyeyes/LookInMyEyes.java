@@ -148,12 +148,12 @@ public final class LookInMyEyes {
     }
 
     private static Set<EntityType<?>> getDeafEntities() {
-        if (deafEntities == null) deafEntities = DEAF.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITY_TYPES::getValue).collect(Collectors.toSet());
+        if (deafEntities == null) deafEntities = DEAF.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITIES::getValue).collect(Collectors.toSet());
         return deafEntities;
     }
 
     private static Set<EntityType<?>> getBlindEntities() {
-        if (blindEntities == null) blindEntities = BLIND.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITY_TYPES::getValue).collect(Collectors.toSet());
+        if (blindEntities == null) blindEntities = BLIND.get().stream().map(ResourceLocation::parse).map(ForgeRegistries.ENTITIES::getValue).collect(Collectors.toSet());
         return blindEntities;
     }
 
