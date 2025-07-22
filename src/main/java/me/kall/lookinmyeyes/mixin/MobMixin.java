@@ -1,6 +1,7 @@
 package me.kall.lookinmyeyes.mixin;
 
 import me.kall.lookinmyeyes.LookInMyEyes;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +20,7 @@ public abstract class MobMixin {
             return;
         }
         if (LookInMyEyes.isInFieldOfView(observer, target)) {
-            if (LookInMyEyes.getBlindEntities().contains(observer.getType())) ci.cancel();
+            if (LookInMyEyes.getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS)) ci.cancel();
         } else {
             ci.cancel();
         }
