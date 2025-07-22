@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -86,7 +87,7 @@ public final class LookInMyEyes {
             return;
         }
         if (isInFieldOfView(observer, target)) {
-            if (getBlindEntities().contains(observer.getType())) event.setCanceled(true);
+            if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS) || observer.hasEffect(MobEffects.DARKNESS)) event.setCanceled(true);
         } else {
             event.setCanceled(true);
         }
