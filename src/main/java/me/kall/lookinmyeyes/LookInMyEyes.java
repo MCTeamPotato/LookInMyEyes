@@ -87,7 +87,7 @@ public final class LookInMyEyes {
             return;
         }
         if (isInFieldOfView(observer, target)) {
-            if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS) || observer.hasEffect(MobEffects.DARKNESS)) event.setCanceled(true);
+            if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS)) event.setCanceled(true);
         } else {
             event.setCanceled(true);
         }
