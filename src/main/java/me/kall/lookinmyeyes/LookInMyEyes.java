@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -74,7 +75,6 @@ public final class LookInMyEyes {
 
         CHANNEL.registerMessage(packetId++, SoundAlertPacket.class, SoundAlertPacket::encode, SoundAlertPacket::new, this::handleSoundAlert);
     }
-
 
     public void onSoundPlay(@NotNull PlaySoundAtEntityEvent event) {
         if (event.isCanceled() || !MOBS_CHECK_SOUND_SOURCE.get() || !event.getCategory().equals(SoundSource.PLAYERS)) return;
