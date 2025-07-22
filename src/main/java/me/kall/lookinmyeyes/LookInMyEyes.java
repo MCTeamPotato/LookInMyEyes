@@ -62,7 +62,7 @@ public final class LookInMyEyes {
         MOBS_CHECK_SOUND_SOURCE_CHANCE = builder.comment("The possibility of mobs checking sound source when they heard sth.").defineInRange("MobsCheckSoundSourceChance(%)", 30, 0, 100);
         SNEAKING_NO_SOUND = builder.comment("If enabled, you will not play any sound when sneaking").define("SneakNoSound", true);
         DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", Lists.newArrayList(), Predicates.alwaysTrue());
-        BLIND = builder.comment("Blind entities that fail to see anything").define("Blind", Lists.newArrayList(), Predicates.alwaysTrue());
+        BLIND = builder.comment("Blind entities that fail to see anything").defineList("Blind", Lists.newArrayList(), Predicates.alwaysTrue());
         builder.pop();
         CONFIG = builder.build();
     }
