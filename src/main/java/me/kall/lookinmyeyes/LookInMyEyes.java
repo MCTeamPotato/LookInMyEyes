@@ -82,7 +82,7 @@ public final class LookInMyEyes {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
         LivingEntity observer = event.getEntity();
-        if (observer.level().isClientSide() || target == null) return;
+        if (observer.level.isClientSide() || target == null) return;
         if (observer.getPersistentData().getBoolean(MOD_ID)) {
             observer.getPersistentData().remove(MOD_ID);
              return;
