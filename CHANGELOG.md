@@ -1,3 +1,2 @@
-# 1.3.1
-- Make sound source investigation smoother
-- Setup auto-publish
+# 1.3.1-hotfix
+- Make entity instantly target player while investigating sound source
