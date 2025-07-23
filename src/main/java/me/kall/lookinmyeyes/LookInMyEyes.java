@@ -82,7 +82,7 @@ public final class LookInMyEyes {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
         LivingEntity observer = event.getEntity();
-        if (observer.level().isClientSide() || target == null) return;
+        if (observer.level.isClientSide() || target == null) return;
         if (isInFieldOfView(observer, target)) {
             if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS) || observer.hasEffect(MobEffects.DARKNESS)) event.setCanceled(true);
         } else {
