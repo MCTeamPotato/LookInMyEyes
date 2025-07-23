@@ -110,7 +110,8 @@ public final class LookInMyEyes {
 
             level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
                 entity.getNavigation().stop();
-                entity.getNavigation().moveTo(player, 1.0);
+                entity.getPersistentData().putBoolean(MOD_ID, true);
+                entity.setTarget(player);
             });
         });
         ctx.get().setPacketHandled(true);
