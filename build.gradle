@@ -1,15 +1,12 @@
+import net.darkhax.curseforgegradle.TaskPublishCurseForge
+
 plugins {
     id 'dev.architectury.loom' version '1.10-SNAPSHOT'
-    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id 'net.darkhax.curseforgegradle' version '1.1.+'
 }
 
 group = project.maven_group
 version = project.minecraft_version + "-" + project.mod_version
-
-configurations {
-    shadow
-    implementation.extendsFrom(shadow)
-}
 
 base {
     archivesName = project.archives_name
@@ -52,13 +49,6 @@ dependencies {
     forge "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
 }
 
-shadowJar {
-    configurations = [project.configurations.shadow]
-    mergeServiceFiles()
-
-    archiveClassifier = "dev-shadow"
-}
-
 processResources {
     inputs.property 'version', project.version
 
@@ -68,6 +58,8 @@ processResources {
 }
 
 java {
+    withSourcesJar()
+
     if (version.startsWith("1.16.5")) {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -77,16 +69,42 @@ java {
     }
 }
 
-remapJar {
-    dependsOn shadowJar
-    inputFile = shadowJar.archiveFile
-    archiveClassifier = null
-}
-
 tasks.withType(JavaCompile).configureEach {
     if (version.startsWith("1.16.5")) {
         it.options.release = 8
     } else {
         it.options.release = 17
     }
+}
+
+String currentChangeLog = file("CHANGELOG.md").getText("UTF-8")
+String[] javaVersions = []
+
+if (version.startsWith("1.16.5")) {
+    javaVersions = ["Java 17", "Java 21", "Java 22", "Java 8"]
+} else if (version.startsWith("1.21.1")) {
+    javaVersions = ["Java 21", "Java 22"]
+} else {
+    javaVersions = ["Java 17", "Java 21", "Java 22"]
+}
+
+String modLoader = version.startsWith("1.21.1") ? "NeoForge" : "Forge";
+
+tasks.register("publishCurseForge", TaskPublishCurseForge) {
+    apiToken = System.getenv("CURSEFORGE_TOKEN")
+    disableVersionDetection()
+
+    def mainFile = upload(cf_project_id, remapJar)
+    mainFile.displayName = "${archives_name}-${version}"
+    mainFile.releaseType = "release"
+    mainFile.changelog = currentChangeLog
+    mainFile.changelogType = "markdown"
+    mainFile.addModLoader(modLoader)
+    mainFile.addJavaVersion(javaVersions)
+    mainFile.addGameVersion(minecraft_version)
+
+    def sourcesFile = mainFile.withAdditionalFile(sourcesJar)
+
+    sourcesFile.changelog = currentChangeLog
+    sourcesFile.changelogType = "markdown"
 }

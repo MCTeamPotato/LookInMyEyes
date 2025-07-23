@@ -2,6 +2,7 @@ package me.kall.lookinmyeyes;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -85,7 +86,7 @@ public final class LookInMyEyes {
                 return;
             }
 
-            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
+            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get() && player instanceof LocalPlayer) {
                 CHANNEL.sendToServer(new SoundAlertPacket(event.getVolume()));
             }
         }
@@ -109,24 +110,8 @@ public final class LookInMyEyes {
             Predicate<Mob> filter = entity -> entity.isAlive() && entity instanceof Enemy && entity.getTarget() == null && !getDeafEntities().contains(entity.getType());
 
             level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
-                Vec3 toSound = player.position().subtract(entity.position()).normalize();
-
-                double yaw = Math.toDegrees(Math.atan2(toSound.z, toSound.x)) - 90;
-
-                double pitch = -Math.toDegrees(Math.atan2(toSound.y, Math.sqrt(toSound.x * toSound.x + toSound.z * toSound.z)));
-
-                entity.yRot = (float) yaw;
-                entity.xRot = (float) pitch;
-
-                entity.yRotO = (float) yaw;
-                entity.xRotO = (float) pitch;
-
-                entity.setYHeadRot((float) yaw);
-
-                if (player.isCreative()) return;
-
-                entity.getPersistentData().putBoolean(MOD_ID, true);
-                entity.setTarget(player);
+                entity.getNavigation().stop();
+                entity.getNavigation().moveTo(player, 1.0);
             });
         });
         ctx.get().setPacketHandled(true);
