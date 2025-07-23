@@ -1,6 +1,7 @@
 package me.kall.lookinmyeyes;
 
 import com.google.common.base.Predicates;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -81,11 +82,7 @@ public final class LookInMyEyes {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
         LivingEntity observer = event.getEntity();
-        if (observer.level.isClientSide() || target == null) return;
-        if (observer.getPersistentData().getBoolean(MOD_ID)) {
-            observer.getPersistentData().remove(MOD_ID);
-            return;
-        }
+        if (observer.level().isClientSide() || target == null) return;
         if (isInFieldOfView(observer, target)) {
             if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS) || observer.hasEffect(MobEffects.DARKNESS)) event.setCanceled(true);
         } else {
@@ -101,7 +98,7 @@ public final class LookInMyEyes {
                 return;
             }
 
-            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
+            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get() && player instanceof LocalPlayer) {
                 CHANNEL.sendToServer(new SoundAlertPacket(event.getNewVolume()));
             }
         }
@@ -125,24 +122,8 @@ public final class LookInMyEyes {
             Predicate<Mob> filter = entity -> entity.isAlive() && entity instanceof Enemy && entity.getTarget() == null && !getDeafEntities().contains(entity.getType());
 
             level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
-                Vec3 toSound = player.position().subtract(entity.position()).normalize();
-
-                double yaw = Math.toDegrees(Math.atan2(toSound.z, toSound.x)) - 90;
-
-                double pitch = -Math.toDegrees(Math.atan2(toSound.y, Math.sqrt(toSound.x * toSound.x + toSound.z * toSound.z)));
-
-                entity.setYRot((float) yaw);
-                entity.setXRot((float) pitch);
-
-                entity.yRotO = (float) yaw;
-                entity.xRotO = (float) pitch;
-
-                entity.setYHeadRot((float) yaw);
-
-                if (player.isCreative()) return;
-
-                entity.getPersistentData().putBoolean(MOD_ID, true);
-                entity.setTarget(player);
+                entity.getNavigation().stop();
+                entity.getNavigation().moveTo(player, 1.0);
             });
         });
         ctx.get().setPacketHandled(true);
