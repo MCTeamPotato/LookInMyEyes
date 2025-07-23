@@ -15,10 +15,6 @@ public abstract class MobMixin {
     private void onSetTarget(LivingEntity target, CallbackInfo ci) {
         LivingEntity observer = (LivingEntity) (Object) this;
         if (observer.level.isClientSide() || target == null) return;
-        if (observer.getPersistentData().getBoolean(LookInMyEyes.MOD_ID)) {
-            observer.getPersistentData().remove(LookInMyEyes.MOD_ID);
-            return;
-        }
         if (LookInMyEyes.isInFieldOfView(observer, target)) {
             if (LookInMyEyes.getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS)) ci.cancel();
         } else {
