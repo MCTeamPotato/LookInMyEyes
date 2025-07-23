@@ -82,7 +82,11 @@ public final class LookInMyEyes {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
         LivingEntity observer = event.getEntity();
-        if (observer.level.isClientSide() || target == null) return;
+        if (observer.level().isClientSide() || target == null) return;
+        if (observer.getPersistentData().getBoolean(MOD_ID)) {
+            observer.getPersistentData().remove(MOD_ID);
+             return;
+        }
         if (isInFieldOfView(observer, target)) {
             if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS) || observer.hasEffect(MobEffects.DARKNESS)) event.setCanceled(true);
         } else {
@@ -123,7 +127,8 @@ public final class LookInMyEyes {
 
             level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
                 entity.getNavigation().stop();
-                entity.getNavigation().moveTo(player, 1.0);
+                entity.getPersistentData().putBoolean(MOD_ID, true);
+                entity.setTarget(player);
             });
         });
         ctx.get().setPacketHandled(true);
