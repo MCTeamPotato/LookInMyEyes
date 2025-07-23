@@ -99,7 +99,7 @@ public final class LookInMyEyes {
             }
 
             if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get() && player instanceof LocalPlayer) {
-                CHANNEL.sendToServer(new SoundAlertPacket(event.getNewVolume()));
+                CHANNEL.sendToServer(new SoundAlertPacket(event.getVolume()));
             }
         }
     }
