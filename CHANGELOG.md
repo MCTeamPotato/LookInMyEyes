@@ -1,2 +1,2 @@
-# 1.3.1-hotfix
-- Make entity instantly target player while investigating sound source
+# 1.3.3
+Fix NeutralMobs (e.g. enderman) exceptionally target player when hearing sound.
