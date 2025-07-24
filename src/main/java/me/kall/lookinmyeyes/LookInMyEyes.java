@@ -1,7 +1,6 @@
 package me.kall.lookinmyeyes;
 
 import com.google.common.base.Predicates;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -102,7 +101,7 @@ public final class LookInMyEyes {
                 return;
             }
 
-            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get() && player instanceof LocalPlayer) {
+            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get()) {
                 CHANNEL.sendToServer(new SoundAlertPacket(event.getNewVolume()));
             }
         }
