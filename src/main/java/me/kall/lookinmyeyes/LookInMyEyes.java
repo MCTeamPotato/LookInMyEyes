@@ -47,7 +47,7 @@ public final class LookInMyEyes {
     private static final ForgeConfigSpec CONFIG;
     private static final ForgeConfigSpec.DoubleValue VIEW_FIELD;
     private static final ForgeConfigSpec.IntValue MOBS_CHECK_SOUND_SOURCE_CHANCE;
-    private static final ForgeConfigSpec.BooleanValue MOBS_CHECK_SOUND_SOURCE, SNEAKING_NO_SOUND;
+    private static final ForgeConfigSpec.BooleanValue MOBS_CHECK_SOUND_SOURCE, SNEAKING_NO_SOUND, MOBS_TARGET_ATTACKER;
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> DEAF, BLIND;
 
     private static Set<EntityType<?>> deafEntities, blindEntities;
@@ -59,8 +59,9 @@ public final class LookInMyEyes {
         MOBS_CHECK_SOUND_SOURCE = builder.comment("If enabled, PathfinderMobs would turn to the sound source when they heard sth.").define("MobsCheckSoundSource", true);
         MOBS_CHECK_SOUND_SOURCE_CHANCE = builder.comment("The possibility of mobs checking sound source when they heard sth.").defineInRange("MobsCheckSoundSourceChance(%)", 30, 0, 100);
         SNEAKING_NO_SOUND = builder.comment("If enabled, you will not play any sound when sneaking").define("SneakNoSound", true);
-        DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", Lists.newArrayList(), Predicates.alwaysTrue());
-        BLIND = builder.comment("Blind entities that fail to see anything").defineList("Blind", Lists.newArrayList(), Predicates.alwaysTrue());
+        MOBS_TARGET_ATTACKER = builder.comment("If enabled, mobs that don't have target will target the source living entity when attacked", "Disable this may cause some strange issues between iron golems and zombies").define("MobsTargetAttacker", true);
+        DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", List.of(), Predicates.alwaysTrue());
+        BLIND = builder.comment("Blind entities that fail to see anything").defineList("Blind", List.of(), Predicates.alwaysTrue());
         builder.pop();
         CONFIG = builder.build();
     }
@@ -69,14 +70,41 @@ public final class LookInMyEyes {
         LOGGER.info("Look in my eyes!");
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, CONFIG);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onSoundPlay);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onLivingDamage);
 
         CHANNEL.registerMessage(packetId++, SoundAlertPacket.class, SoundAlertPacket::encode, SoundAlertPacket::new, this::handleSoundAlert);
     }
 
-    public void onSoundPlay(@NotNull PlaySoundAtEntityEvent event) {
-        if (event.isCanceled() || !MOBS_CHECK_SOUND_SOURCE.get() || !event.getCategory().equals(SoundSource.PLAYERS)) return;
-        if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
+    public void onLivingDamage(@NotNull LivingDamageEvent event) {
+        LivingEntity attacked = event.getEntity();
+        if (!event.isCanceled() && MOBS_TARGET_ATTACKER.get() && event.getEntity() instanceof PathfinderMob mob && mob.level() instanceof ServerLevel && attacked instanceof PathfinderMob entity && entity.getTarget() == null) {
+            LivingEntity source = null;
+            if (event.getSource().getDirectEntity() instanceof LivingEntity sourceDirectEntity) source = sourceDirectEntity;
+            if (event.getSource().getEntity() instanceof LivingEntity sourceEntity) source = sourceEntity;
+            entity.getPersistentData().putBoolean(MOD_ID, true);
+            entity.setTarget(source);
+        }
+    }
+
+    public void onTargetChange(@NotNull LivingChangeTargetEvent event) {
+        if (event.isCanceled()) return;
+        LivingEntity target = event.getNewTarget();
+        LivingEntity observer = event.getEntity();
+        if (observer.level().isClientSide() || target == null) return;
+        if (observer.getPersistentData().getBoolean(MOD_ID)) {
+            observer.getPersistentData().remove(MOD_ID);
+             return;
+        }
+        if (isInFieldOfView(observer, target)) {
+            if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS) || observer.hasEffect(MobEffects.DARKNESS)) event.setCanceled(true);
+        } else {
+            event.setCanceled(true);
+        }
+    }
+
+    public void onSoundPlay(@NotNull PlayLevelSoundEvent.AtEntity event) {
+        if (event.isCanceled() || !MOBS_CHECK_SOUND_SOURCE.get() || !event.getSource().equals(SoundSource.PLAYERS)) return;
+        if (event.getEntity() instanceof Player player) {
             if (player.isSteppingCarefully() && SNEAKING_NO_SOUND.get()) {
                 event.setCanceled(true);
                 return;
