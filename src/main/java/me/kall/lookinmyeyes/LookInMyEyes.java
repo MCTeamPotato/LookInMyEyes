@@ -7,10 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
@@ -122,7 +119,7 @@ public final class LookInMyEyes {
             ServerLevel level = (ServerLevel) player.level();
             float radius = packet.volume * 16.0F;
             AABB soundRadius = player.getBoundingBox().inflate(radius);
-            Predicate<Mob> filter = entity -> entity.isAlive() && entity instanceof Enemy && entity.getTarget() == null && !getDeafEntities().contains(entity.getType());
+            Predicate<Mob> filter = entity -> entity.isAlive() && entity instanceof Enemy && !(entity instanceof NeutralMob) && entity.getTarget() == null && !getDeafEntities().contains(entity.getType());
 
             level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
                 entity.getNavigation().stop();
