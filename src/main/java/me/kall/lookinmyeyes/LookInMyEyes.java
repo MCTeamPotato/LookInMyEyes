@@ -25,6 +25,7 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.neoforge.event.entity.living.LivingChangeTargetEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -48,7 +49,7 @@ public final class LookInMyEyes {
     private static final ModConfigSpec CONFIG;
     private static final ModConfigSpec.DoubleValue VIEW_FIELD;
     private static final ModConfigSpec.IntValue MOBS_CHECK_SOUND_SOURCE_CHANCE;
-    private static final ModConfigSpec.BooleanValue MOBS_CHECK_SOUND_SOURCE, SNEAKING_NO_SOUND;
+    private static final ModConfigSpec.BooleanValue MOBS_CHECK_SOUND_SOURCE, SNEAKING_NO_SOUND, MOBS_TARGET_ATTACKER;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> DEAF, BLIND;
 
     private static Set<EntityType<?>> deafEntities, blindEntities;
@@ -60,6 +61,7 @@ public final class LookInMyEyes {
         MOBS_CHECK_SOUND_SOURCE = builder.comment("If enabled, PathfinderMobs would turn to the sound source when they heard sth.").define("MobsCheckSoundSource", true);
         MOBS_CHECK_SOUND_SOURCE_CHANCE = builder.comment("The possibility of mobs checking sound source when they heard sth.").defineInRange("MobsCheckSoundSourceChance(%)", 30, 0, 100);
         SNEAKING_NO_SOUND = builder.comment("If enabled, you will not play any sound when sneaking").define("SneakNoSound", true);
+        MOBS_TARGET_ATTACKER = builder.comment("If enabled, mobs that don't have target will target the source living entity when attacked", "Disable this may cause some strange issues between iron golems and zombies").define("MobsTargetAttacker", true);
         DEAF = builder.comment("Deaf entities that fail to hear anything").defineList("Deaf", List.of(), Predicates.alwaysTrue());
         BLIND = builder.comment("Blind entities that fail to see anything").defineList("Blind", List.of(), Predicates.alwaysTrue());
         builder.pop();
@@ -71,7 +73,19 @@ public final class LookInMyEyes {
         container.registerConfig(ModConfig.Type.COMMON, CONFIG);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onTargetChange);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onSoundPlay);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onLivingDamage);
         modEventBus.addListener(this::registerPacket);
+    }
+
+    public void onLivingDamage(@NotNull LivingDamageEvent.Post event) {
+        LivingEntity attacked = event.getEntity();
+        if (MOBS_TARGET_ATTACKER.get() && event.getEntity() instanceof PathfinderMob mob && mob.level() instanceof ServerLevel && attacked instanceof PathfinderMob entity && entity.getTarget() == null) {
+            LivingEntity source = null;
+            if (event.getSource().getDirectEntity() instanceof LivingEntity sourceDirectEntity) source = sourceDirectEntity;
+            if (event.getSource().getEntity() instanceof LivingEntity sourceEntity) source = sourceEntity;
+            entity.getPersistentData().putBoolean(MOD_ID, true);
+            entity.setTarget(source);
+        }
     }
 
     public void onTargetChange(@NotNull LivingChangeTargetEvent event) {
