@@ -1,7 +1,6 @@
 package me.kall.lookinmyeyes;
 
 import com.google.common.base.Predicates;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
