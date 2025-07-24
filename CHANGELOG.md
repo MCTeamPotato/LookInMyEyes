@@ -1,2 +1,2 @@
-# 1.3.3
-Fix NeutralMobs (e.g. enderman) exceptionally target player when hearing sound.
+# 1.4.0
+Add event for mobs that don't have target to target the source living entity when attacked, which resolves issues like zombies and iron golems
