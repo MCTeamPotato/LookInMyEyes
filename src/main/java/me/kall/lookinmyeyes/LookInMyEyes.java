@@ -1,7 +1,6 @@
 package me.kall.lookinmyeyes;
 
 import com.google.common.base.Predicates;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
