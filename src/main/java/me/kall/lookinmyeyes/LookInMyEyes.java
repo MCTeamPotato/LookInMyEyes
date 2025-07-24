@@ -78,8 +78,8 @@ public final class LookInMyEyes {
     }
 
     public void onLivingDamage(@NotNull LivingDamageEvent event) {
-        LivingEntity attacked = event.getEntity();
-        if (!event.isCanceled() && MOBS_TARGET_ATTACKER.get() && event.getEntity() instanceof PathfinderMob mob && mob.level() instanceof ServerLevel && attacked instanceof PathfinderMob entity && entity.getTarget() == null) {
+        LivingEntity attacked = event.getEntityLiving();
+        if (!event.isCanceled() && MOBS_TARGET_ATTACKER.get() && event.getEntity() instanceof PathfinderMob mob && mob.level instanceof ServerLevel && attacked instanceof PathfinderMob entity && entity.getTarget() == null) {
             LivingEntity source = null;
             if (event.getSource().getDirectEntity() instanceof LivingEntity sourceDirectEntity) source = sourceDirectEntity;
             if (event.getSource().getEntity() instanceof LivingEntity sourceEntity) source = sourceEntity;
