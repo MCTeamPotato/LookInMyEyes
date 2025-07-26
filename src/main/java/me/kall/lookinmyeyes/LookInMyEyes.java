@@ -112,8 +112,8 @@ public final class LookInMyEyes {
                 return;
             }
 
-            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get() && player.level().isClientSide()) {
-                CHANNEL.sendToServer(new SoundAlertPacket(event.getNewVolume()));
+            if (ThreadLocalRandom.current().nextInt(0, 101) <= MOBS_CHECK_SOUND_SOURCE_CHANCE.get() && player.level.isClientSide()) {
+                CHANNEL.sendToServer(new SoundAlertPacket(event.getVolume()));
             }
         }
     }
