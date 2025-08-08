@@ -1,2 +1,2 @@
-# 1.4.1
-Fix server side crash. again...
+# 1.4.2
+Fix creative players are being targeted
