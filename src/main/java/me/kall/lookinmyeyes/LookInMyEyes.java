@@ -97,6 +97,7 @@ public final class LookInMyEyes {
             observer.getPersistentData().remove(MOD_ID);
              return;
         }
+        if (target instanceof Player && ((Player) target).isCreative()) return;
         if (isInFieldOfView(observer, target)) {
             if (getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS)) event.setCanceled(true);
         } else {
