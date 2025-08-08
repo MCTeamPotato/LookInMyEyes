@@ -4,6 +4,7 @@ import me.kall.lookinmyeyes.LookInMyEyes;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,6 +20,7 @@ public abstract class MobMixin {
             observer.getPersistentData().remove(LookInMyEyes.MOD_ID);
             return;
         }
+        if (target instanceof Player && ((Player) target).isCreative()) return;
         if (LookInMyEyes.isInFieldOfView(observer, target)) {
             if (LookInMyEyes.getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS)) ci.cancel();
         } else {
