@@ -20,7 +20,10 @@ public abstract class MobMixin {
             observer.getPersistentData().remove(LookInMyEyes.MOD_ID);
             return;
         }
-        if (target instanceof Player && ((Player) target).isCreative()) return;
+        if (target instanceof Player && ((Player) target).isCreative()) {
+            ci.cancel();
+            return;
+        }
         if (LookInMyEyes.isInFieldOfView(observer, target)) {
             if (LookInMyEyes.getBlindEntities().contains(observer.getType()) || observer.hasEffect(MobEffects.BLINDNESS)) ci.cancel();
         } else {
