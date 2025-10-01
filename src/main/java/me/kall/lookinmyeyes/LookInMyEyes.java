@@ -83,9 +83,11 @@ public final class LookInMyEyes {
             PathfinderMob entity = (PathfinderMob) event.getEntity();
             if (event.getSource().getDirectEntity() instanceof LivingEntity) source = (LivingEntity) event.getSource().getDirectEntity();
             if (event.getSource().getEntity() instanceof LivingEntity) source = (LivingEntity) event.getSource().getEntity();
-            if (source != null && entity.isAlliedTo(source)) return;
-            entity.getPersistentData().putBoolean(MOD_ID, true);
-            entity.setTarget(source);
+            if (source != null) {
+                entity.getNavigation().stop();
+                entity.lookAt(source, Integer.MAX_VALUE, Integer.MAX_VALUE);
+                entity.getLookControl().setLookAt(source.position());
+            }
         }
     }
 
@@ -123,8 +125,8 @@ public final class LookInMyEyes {
 
             level.getEntitiesOfClass(PathfinderMob.class, soundRadius, filter).forEach(entity -> {
                 entity.getNavigation().stop();
-                entity.getPersistentData().putBoolean(MOD_ID, true);
-                entity.setTarget(player);
+                entity.lookAt(player, Integer.MAX_VALUE, Integer.MAX_VALUE);
+                entity.getLookControl().setLookAt(player.position());
             });
         });
         ctx.get().setPacketHandled(true);
