@@ -1,2 +1,2 @@
-# 1.4.3
-Fix creative players are being targeted (again...)
+# 1.4.4
+Try to resolve https://github.com/MCTeamPotato/LookInMyEyes/issues/6

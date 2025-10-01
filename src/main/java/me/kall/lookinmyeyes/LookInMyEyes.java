@@ -83,6 +83,7 @@ public final class LookInMyEyes {
             PathfinderMob entity = (PathfinderMob) event.getEntity();
             if (event.getSource().getDirectEntity() instanceof LivingEntity) source = (LivingEntity) event.getSource().getDirectEntity();
             if (event.getSource().getEntity() instanceof LivingEntity) source = (LivingEntity) event.getSource().getEntity();
+            if (source != null && entity.isAlliedTo(source)) return;
             entity.getPersistentData().putBoolean(MOD_ID, true);
             entity.setTarget(source);
         }
