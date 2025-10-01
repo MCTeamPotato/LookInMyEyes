@@ -83,6 +83,7 @@ public final class LookInMyEyes {
             LivingEntity source = null;
             if (event.getSource().getDirectEntity() instanceof LivingEntity sourceDirectEntity) source = sourceDirectEntity;
             if (event.getSource().getEntity() instanceof LivingEntity sourceEntity) source = sourceEntity;
+            if (source != null && entity.isAlliedTo(source)) return;
             entity.getPersistentData().putBoolean(MOD_ID, true);
             entity.setTarget(source);
         }
