@@ -95,11 +95,7 @@ public final class LookInMyEyes {
         if (event.isCanceled()) return;
         LivingEntity target = event.getNewTarget();
         LivingEntity observer = event.getEntity();
-        if (observer.level.isClientSide() || target == null) return;
-        if (observer.getPersistentData().getBoolean(MOD_ID)) {
-            observer.getPersistentData().remove(MOD_ID);
-             return;
-        }
+        if (observer.level().isClientSide() || target == null) return;
         if (target instanceof Player && ((Player) target).isCreative()) {
             event.setCanceled(true);
             return;
@@ -146,6 +142,7 @@ public final class LookInMyEyes {
                 entity.getNavigation().stop();
                 entity.lookAt(player, Integer.MAX_VALUE, Integer.MAX_VALUE);
                 entity.getLookControl().setLookAt(player.position());
+                entity.setTarget(player);
             });
         });
         ctx.get().setPacketHandled(true);
