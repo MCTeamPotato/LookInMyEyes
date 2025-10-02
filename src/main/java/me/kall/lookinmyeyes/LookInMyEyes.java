@@ -171,6 +171,7 @@ public final class LookInMyEyes {
                     entity.getNavigation().stop();
                     entity.lookAt(player, Integer.MAX_VALUE, Integer.MAX_VALUE);
                     entity.getLookControl().setLookAt(player.position());
+                    entity.setTarget(player);
                 });
             }).exceptionally(throwable -> null);
         }
